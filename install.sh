@@ -10,6 +10,7 @@ NC='\033[0m'
 # CONFIGURAÇÕES - EDITE ESTA SEÇÃO
 # ==========================================
 DOMAIN="sistema.hubsa2.com.br"    # <-- ALTERE AQUI SUA URL
+API_DOMAIN="api.hubsa2.com.br"    # <-- ALTERE AQUI SUA URL DA API
 EMAIL="seu-email@exemplo.com"      # <-- ALTERE AQUI SEU EMAIL
 # ==========================================
 
@@ -96,6 +97,7 @@ NODE_ENV=production
 PORT=3001
 APP_URL=https://$DOMAIN
 API_URL=https://$DOMAIN/api
+VITE_API_URL=https://$API_DOMAIN/api
 EOF
 
 # Build da aplicação
@@ -104,18 +106,26 @@ npm run build || error "Falha ao fazer build da aplicação"
 
 # Configurar Nginx
 log "Configurando Nginx..."
+# Configuração para o frontend
 cat > /etc/nginx/sites-available/sistemahubsa << EOF
 server {
     listen 80;
     server_name $DOMAIN;
     root $APP_DIR/dist;
-    index index.html;
 
     location / {
         try_files \$uri \$uri/ /index.html;
     }
+}
+EOF
 
-    location /api {
+# Configuração para a API
+cat > /etc/nginx/sites-available/sistemahubsa-api << EOF
+server {
+    listen 80;
+    server_name $API_DOMAIN;
+
+    location / {
         proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
@@ -123,25 +133,12 @@ server {
         proxy_set_header Host \$host;
         proxy_cache_bypass \$http_upgrade;
     }
-
-    # Configurações de segurança
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-XSS-Protection "1; mode=block";
-    add_header X-Content-Type-Options "nosniff";
-
-    # Cache para arquivos estáticos
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)\$ {
-        expires 30d;
-        add_header Cache-Control "public, no-transform";
-    }
 }
 EOF
 
-# Ativar configuração do Nginx
+# Ativar os sites
 ln -sf /etc/nginx/sites-available/sistemahubsa /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
-nginx -t || error "Configuração do Nginx inválida"
-systemctl restart nginx
+ln -sf /etc/nginx/sites-available/sistemahubsa-api /etc/nginx/sites-enabled/
 
 # Configurar SSL
 log "Configurando SSL..."

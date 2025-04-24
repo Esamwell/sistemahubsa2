@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useRequests } from "./RequestContext";
 
 // API base URL
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Interface para usuário com senha (apenas para autenticação)
 interface UserWithPassword extends User {
