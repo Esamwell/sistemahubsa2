@@ -110,11 +110,34 @@ log "Configurando Nginx..."
 cat > /etc/nginx/sites-available/sistemahubsa << EOF
 server {
     listen 80;
+    listen [::]:80;
+    server_name $DOMAIN;
+    
+    # Redirecionar todo tráfego HTTP para HTTPS
+    return 301 https://\$server_name\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
     server_name $DOMAIN;
     root $APP_DIR/dist;
 
+    # Headers de segurança
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' https: http: data: blob: 'unsafe-inline'" always;
+
     location / {
         try_files \$uri \$uri/ /index.html;
+    }
+
+    # Cache para arquivos estáticos
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)\$ {
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
     }
 }
 EOF
@@ -123,7 +146,28 @@ EOF
 cat > /etc/nginx/sites-available/sistemahubsa-api << EOF
 server {
     listen 80;
+    listen [::]:80;
     server_name $API_DOMAIN;
+    
+    # Redirecionar todo tráfego HTTP para HTTPS
+    return 301 https://\$server_name\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name $API_DOMAIN;
+
+    # Headers de segurança
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    # CORS headers
+    add_header 'Access-Control-Allow-Origin' 'https://$DOMAIN' always;
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+    add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
 
     location / {
         proxy_pass http://localhost:3001;
@@ -132,6 +176,14 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host \$host;
         proxy_cache_bypass \$http_upgrade;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+
+        # Configurações de timeout
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 }
 EOF
@@ -139,10 +191,15 @@ EOF
 # Ativar os sites
 ln -sf /etc/nginx/sites-available/sistemahubsa /etc/nginx/sites-enabled/
 ln -sf /etc/nginx/sites-available/sistemahubsa-api /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+
+# Testar e reiniciar Nginx
+nginx -t || error "Configuração do Nginx inválida"
+systemctl restart nginx
 
 # Configurar SSL
 log "Configurando SSL..."
-certbot --nginx -d $DOMAIN --non-interactive --agree-tos --email $EMAIL || error "Falha ao configurar SSL"
+certbot --nginx -d $DOMAIN -d $API_DOMAIN --non-interactive --agree-tos --email $EMAIL || error "Falha ao configurar SSL"
 
 # Configurar PM2
 log "Configurando PM2..."
