@@ -13,7 +13,7 @@ const app = express();
 // Configuração do CORS
 const FRONTEND_URL = process.env.APP_URL || 'https://sistema.hubsa2.com.br';
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: [FRONTEND_URL],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma'],
   credentials: true,
@@ -178,13 +178,14 @@ app.post('/api/force-password', async (req, res) => {
 app.use('/api/requests', requestRoutes);
 app.use('/api/users', userRoutes);
 
-// Porta da aplicação
-const PORT = process.env.PORT || 3001;
+// Porta e host da aplicação
+const PORT = Number(process.env.PORT) || 3001;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Inicia o servidor
 const startServer = () => {
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+  app.listen(PORT, HOST, () => {
+    console.log(`Servidor rodando em ${HOST}:${PORT}`);
   });
 };
 
