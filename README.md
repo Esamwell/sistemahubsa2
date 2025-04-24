@@ -19,50 +19,39 @@ Sistema de gerenciamento desenvolvido com React, TypeScript e Node.js.
 - Node.js 18.x ou superior
 - npm ou yarn
 - Git
+- VPS Ubuntu 20.04 LTS
+- Domínio configurado
 
-## 🔧 Instalação
+## 🔧 Instalação em Produção
 
-1. Clone o repositório:
-```bash
-git clone https://github.com/seu-usuario/sistemahubsa.git
-cd sistemahubsa
-```
-
-2. Instale as dependências:
-```bash
-npm install
-```
-
-3. Configure as variáveis de ambiente:
-```bash
-cp .env.example .env
-# Edite o arquivo .env com suas configurações
-```
-
-4. Inicie o servidor de desenvolvimento:
-```bash
-npm run dev
-```
-
-## 🏗️ Build
-
-Para criar uma versão de produção:
+### 1. Acesso à VPS
 
 ```bash
-npm run build
+ssh root@seu-ip-da-vps
 ```
 
-## 📦 Scripts Disponíveis
+### 2. Download e Configuração
 
-- `npm run dev`: Inicia o servidor de desenvolvimento
-- `npm run build`: Cria a versão de produção
-- `npm run preview`: Visualiza a versão de produção localmente
-- `npm run lint`: Executa o linter
-- `npm run api`: Inicia apenas o servidor da API
+1. Baixe o script de instalação:
+```bash
+wget https://raw.githubusercontent.com/Esamwell/sistemahubsa2/main/install.sh
+```
 
-## 🌐 Deploy
+2. **IMPORTANTE**: Configure o script antes da execução:
+```bash
+nano install.sh
+```
 
-Para instruções detalhadas de deploy, consulte o arquivo [DEPLOY.md](DEPLOY.md).
+3. No editor nano, você precisa alterar:
+   - Seu email (procure por `seu-email@exemplo.com`)
+   - URL do sistema (se necessário)
+   - Salve com Ctrl+X, depois Y e Enter
+
+4. Execute a instalação:
+```bash
+chmod +x install.sh
+sudo ./install.sh
+```
 
 ## 📁 Estrutura do Projeto
 
@@ -88,17 +77,26 @@ sistemahubsa/
 - Validação de dados
 - Logs de segurança
 
+## 🛠️ Manutenção
+
+### Logs
+```bash
+# Logs da aplicação
+pm2 logs sistemahubsa
+
+# Logs do Nginx
+tail -f /var/log/nginx/error.log
+```
+
+### Backups
+Os backups são mantidos em:
+```
+/var/www/sistemahubsa/backups
+```
+
 ## 📝 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-## 👥 Contribuição
-
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
 
 ## 📞 Suporte
 
