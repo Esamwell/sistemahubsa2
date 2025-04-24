@@ -77,6 +77,13 @@ ufw --force enable
 
 # Criar diretório da aplicação
 log "Criando diretório da aplicação..."
+if [ -d "$APP_DIR" ]; then
+    log "Diretório já existe. Fazendo backup..."
+    BACKUP_DIR="${APP_DIR}_backup_$(date +%Y%m%d_%H%M%S)"
+    mv $APP_DIR $BACKUP_DIR
+    log "Backup criado em: $BACKUP_DIR"
+fi
+
 mkdir -p $APP_DIR
 chown -R $USER:$USER $APP_DIR
 
