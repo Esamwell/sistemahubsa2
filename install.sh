@@ -11,7 +11,8 @@ NC='\033[0m'
 # ==========================================
 DOMAIN="sistema.hubsa2.com.br"    # <-- URL do frontend
 API_DOMAIN="api.hubsa2.com.br"    # <-- URL da API
-EMAIL="seu-email@exemplo.com"      # <-- Email para certificado SSL
+SERVER_IP="SEU_IP_AQUI"          # <-- IP da VPS
+EMAIL="seu-email@exemplo.com"     # <-- Email para certificado SSL
 # ==========================================
 
 # Configurações do sistema
@@ -120,10 +121,22 @@ server {
     listen 80;
     listen [::]:80;
     server_name $DOMAIN;
-    root $APP_DIR/dist;
-
+    
+    # Configurações de segurança
+    server_tokens off;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options SAMEORIGIN;
+    add_header X-XSS-Protection "1; mode=block";
+    
     location / {
+        root $APP_DIR/dist;
         try_files \$uri \$uri/ /index.html;
+        
+        # Headers de cache para arquivos estáticos
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)\$ {
+            expires 30d;
+            add_header Cache-Control "public, no-transform";
+        }
     }
 }
 EOF
@@ -134,6 +147,17 @@ server {
     listen 80;
     listen [::]:80;
     server_name $API_DOMAIN;
+    
+    # Configurações de segurança
+    server_tokens off;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options SAMEORIGIN;
+    add_header X-XSS-Protection "1; mode=block";
+
+    # Limitar acesso apenas ao domínio do frontend e IP da VPS
+    allow $SERVER_IP;
+    allow 127.0.0.1;
+    deny all;
 
     location / {
         proxy_pass http://127.0.0.1:3001;
@@ -145,6 +169,17 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+
+        # Headers CORS
+        add_header 'Access-Control-Allow-Origin' 'https://$DOMAIN' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        
+        # Configurações de timeout
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 }
 EOF
