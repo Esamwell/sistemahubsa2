@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"vite\" \"tsx watch src/api/index.ts\"",
-    "build": "vite build",
+    "build": "tsc src/api/index.ts --outDir dist && vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "api": "tsx watch src/api/index.ts"
+    "api": "tsx watch src/api/index.ts",
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.17",
