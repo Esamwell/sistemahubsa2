@@ -10,8 +10,15 @@ import fs from 'fs/promises';
 // Inicializa o app Express
 const app = express();
 
-// Middleware
-app.use(cors());
+// Configuração do CORS
+const FRONTEND_URL = process.env.APP_URL || 'http://localhost:8080';
+app.use(cors({
+  origin: FRONTEND_URL,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Middleware para desabilitar cache nas respostas

@@ -103,7 +103,7 @@ cat > $APP_DIR/.env << EOF
 NODE_ENV=production
 PORT=3001
 APP_URL=https://$DOMAIN
-API_URL=https://$DOMAIN/api
+API_URL=https://$API_DOMAIN
 VITE_API_URL=https://$API_DOMAIN/api
 EOF
 
