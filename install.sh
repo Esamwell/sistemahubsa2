@@ -6,8 +6,14 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# ==========================================
+# CONFIGURAÇÕES - EDITE ESTA SEÇÃO
+# ==========================================
+DOMAIN="sistema.hubsa2.com.br"    # <-- ALTERE AQUI SUA URL
+EMAIL="seu-email@exemplo.com"      # <-- ALTERE AQUI SEU EMAIL
+# ==========================================
+
 # Configurações do sistema
-DOMAIN="hubsa2.com.br"
 APP_DIR="/var/www/sistemahubsa"
 REPO_URL="https://github.com/Esamwell/sistemahubsa2.git"
 BRANCH="v1.0.0-beta.1"
@@ -33,6 +39,8 @@ fi
 
 # Início da instalação
 log "Iniciando instalação do Sistema HubSA..."
+log "URL do sistema: $DOMAIN"
+log "Email para certificado SSL: $EMAIL"
 
 # Atualizar sistema
 log "Atualizando o sistema..."
@@ -99,7 +107,7 @@ log "Configurando Nginx..."
 cat > /etc/nginx/sites-available/sistemahubsa << EOF
 server {
     listen 80;
-    server_name $DOMAIN www.$DOMAIN;
+    server_name $DOMAIN;
     root $APP_DIR/dist;
     index index.html;
 
@@ -137,7 +145,7 @@ systemctl restart nginx
 
 # Configurar SSL
 log "Configurando SSL..."
-certbot --nginx -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos --email seu-email@exemplo.com || error "Falha ao configurar SSL"
+certbot --nginx -d $DOMAIN --non-interactive --agree-tos --email $EMAIL || error "Falha ao configurar SSL"
 
 # Configurar PM2
 log "Configurando PM2..."
@@ -174,7 +182,6 @@ echo -e "${YELLOW}Próximos passos:${NC}"
 echo "1. Verifique se os registros DNS estão configurados corretamente"
 echo "2. Acesse https://$DOMAIN para verificar se o sistema está funcionando"
 echo "3. Verifique os logs com: pm2 logs sistemahubsa"
-echo "4. Configure um email válido no Certbot editando o script"
 
 # Exibir informações importantes
 echo -e "\n${YELLOW}Informações importantes:${NC}"
