@@ -11,12 +11,13 @@ import fs from 'fs/promises';
 const app = express();
 
 // Configuração do CORS
-const FRONTEND_URL = process.env.APP_URL || 'http://localhost:8080';
+const FRONTEND_URL = process.env.APP_URL || 'https://sistema.hubsa2.com.br';
 app.use(cors({
   origin: FRONTEND_URL,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma'],
+  credentials: true,
+  optionsSuccessStatus: 204
 }));
 
 app.use(express.json());

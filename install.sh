@@ -9,9 +9,9 @@ NC='\033[0m'
 # ==========================================
 # CONFIGURAÇÕES - EDITE ESTA SEÇÃO
 # ==========================================
-DOMAIN="sistema.hubsa2.com.br"    # <-- ALTERE AQUI SUA URL
-API_DOMAIN="api.hubsa2.com.br"    # <-- ALTERE AQUI SUA URL DA API
-EMAIL="seu-email@exemplo.com"      # <-- ALTERE AQUI SEU EMAIL
+DOMAIN="sistema.hubsa2.com.br"    # <-- URL do frontend
+API_DOMAIN="api.hubsa2.com.br"    # <-- URL da API
+EMAIL="seu-email@exemplo.com"      # <-- Email para certificado SSL
 # ==========================================
 
 # Configurações do sistema
@@ -119,10 +119,33 @@ server {
     listen 80;
     listen [::]:80;
     server_name $DOMAIN;
+    
+    # Redirecionar todo tráfego HTTP para HTTPS
+    return 301 https://\$server_name\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name $DOMAIN;
     root $APP_DIR/dist;
+
+    # Headers de segurança
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' https://$API_DOMAIN; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;" always;
 
     location / {
         try_files \$uri \$uri/ /index.html;
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
+    }
+
+    # Cache para arquivos estáticos
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)\$ {
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
     }
 }
 EOF
@@ -133,6 +156,27 @@ server {
     listen 80;
     listen [::]:80;
     server_name $API_DOMAIN;
+    
+    # Redirecionar todo tráfego HTTP para HTTPS
+    return 301 https://\$server_name\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name $API_DOMAIN;
+
+    # Headers de segurança
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+
+    # CORS headers
+    add_header 'Access-Control-Allow-Origin' 'https://$DOMAIN' always;
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+    add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With' always;
+    add_header 'Access-Control-Allow-Credentials' 'true' always;
 
     location / {
         proxy_pass http://localhost:3001;
@@ -144,6 +188,11 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+
+        # Configurações de timeout
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 }
 EOF
